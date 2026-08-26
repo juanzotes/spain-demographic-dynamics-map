@@ -177,9 +177,7 @@
 <div id="info">
     <h3>Population Change by Municipality</h3>
     <p>Spain, 1996–2025. Drag the slider to set a start and end year. Zoom out to see the same
-    trend aggregated by comarca, province, or autonomous community.
-    <br>
-    <em style="font-size: 11px;">Data source: Municipal Register of Inhabitants (Padrón Municipal), Instituto Nacional de Estadística (INE).</em></p>
+    trend aggregated by comarca, province, or autonomous community.</p>
 </div>
 
 <div id="legend"></div>
@@ -262,7 +260,7 @@
     // Search index: name/type/centroid for every entity (all 4 levels),
     // loaded once at startup so search works instantly without depending on
     // which vector tiles happen to be loaded already.
-    const SEARCH_INDEX_URL = 'data/processed/search_index.json';
+    const SEARCH_INDEX_URL = 'data/derived/search_index.json';
 
     // Fixed zoom to fly to per entity type, chosen safely inside that
     // type's own display range (LAYERS above) so the correct fill layer is
