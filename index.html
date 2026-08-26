@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spain Demographic Dynamics — Population Change 1996–2025</title>
+
+    <!-- MapLibre GL JS -->
+    <link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.21.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.21.0/dist/maplibre-gl.js"></script>
+
+    <!-- PMTiles protocol plugin — lets MapLibre read .pmtiles files directly -->
+    <script src="https://cdn.jsdelivr.net/npm/pmtiles@4.4.0/dist/pmtiles.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { width: 100vw; height: 100vh; }
+
+        /* --- Info panel --- */
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            font-size: 13px;
+            z-index: 1;
+            max-width: 280px;
+        }
+        #info h3 { margin: 0 0 4px 0; font-size: 15px; }
+        #info p { margin: 0; color: #555; }
+
+        /* --- Legend --- */
+        #legend {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            background: white;
+            padding: 12px 14px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            font-size: 13px;
+            z-index: 1;
+        }
+        #legend h4 { margin: 0 0 8px 0; font-size: 13px; font-weight: 600; }
+        .legend-row { display: flex; align-items: center; margin-bottom: 3px; }
+        .legend-color {
+            width: 20px; height: 14px; margin-right: 8px;
+            border-radius: 2px; border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* --- Year range control --- */
+        #year-control {
+            position: absolute;
+            bottom: 30px;
+            right: 10px;
+            background: white;
+            padding: 14px 18px;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            font-size: 13px;
+            z-index: 1;
+            width: 320px;
+        }
+        #year-control h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 600; }
+        #year-labels {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        #year-labels span { font-size: 15px; }
+
+        /* Dual-handle range slider: two overlapping <input type=range> */
+        .range-slider {
+            position: relative;
+            height: 30px;
+        }
+        .range-slider input[type="range"] {
+            position: absolute;
+            width: 100%;
+            top: 10px;
+            margin: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: none;
+            pointer-events: none;
+        }
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: auto;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2c3e50;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        .range-slider input[type="range"]::-moz-range-thumb {
+            pointer-events: auto;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2c3e50;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        .range-slider .track {
+            position: absolute;
+            top: 14px;
+            width: 100%;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+        }
+
+        /* --- Search box --- */
+        #search-control {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            width: 320px;
+        }
+        #search-input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+        #search-results {
+            margin-top: 4px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            max-height: 280px;
+            overflow-y: auto;
+            display: none;
+        }
+        .search-result-item {
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: #f0f0f0; }
+        .search-result-name { font-weight: 600; }
+        .search-result-meta { color: #777; font-size: 12px; }
+
+        /* --- Popup --- */
+        .maplibregl-popup-content {
+            font-size: 13px;
+            padding: 10px 12px;
+        }
+        .maplibregl-popup-content strong { font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="search-control">
+    <input type="text" id="search-input" placeholder="Search municipality, comarca, province, or region...">
+    <div id="search-results"></div>
+</div>
+
+<div id="info">
+    <h3>Population Change by Municipality</h3>
+    <p>Spain, 1996–2025. Drag the slider to set a start and end year. Zoom out to see the same
+    trend aggregated by comarca, province, or autonomous community.
+    <br>
+    <em style="font-size: 11px;">Data source: Municipal Register of Inhabitants (Padrón Municipal), Instituto Nacional de Estadística (INE).</em></p>
+</div>
+
+<div id="legend"></div>
+
+<div id="year-control">
+    <h4>Year range</h4>
+    <div id="year-labels">
+        <span id="start-year-label">1996</span>
+        <span id="end-year-label">2025</span>
+    </div>
+    <div class="range-slider">
+        <div class="track"></div>
+        <input type="range" id="start-year-slider" min="0" max="0" step="1" value="0">
+        <input type="range" id="end-year-slider" min="0" max="0" step="1" value="0">
+    </div>
+</div>
+
+<script>
+    // ────────────────────────────────────────────────────────────────────
+    // CONFIG — adjust these if paths / breakpoints need tuning later
+    // ────────────────────────────────────────────────────────────────────
+
+    // Relative path from this index.html to the pmtiles file.
+    // Adjust if you move population_variation.pmtiles elsewhere.
+    const PMTILES_URL = 'pmtiles://data/derived/population_variation.pmtiles';
+
+    // Padrón years: annual from 1998 onward, plus the 1996 baseline (1997 has
+    // no published padrón figure — census methodology transition year).
+    const AVAILABLE_YEARS = [1996, ...Array.from({ length: 2025 - 1998 + 1 }, (_, i) => 1998 + i)];
+
+    // Diverging CAGR color scale (red = growth, blue = decline, pale yellow = near
+    // zero). Derived from the breaks already validated in Paper 1's cumulative
+    // 8-year change map (<-10, -10..-2.5, -2.5..2.5, 2.5..10, >10, over Period
+    // A/B = 8 years), converted to an annualized rate so the same color always
+    // means the same thing regardless of the slider's interval length:
+    //   CAGR = (1 + cumulative/100)^(1/8) - 1
+    // Comarca/provincia/ccaa thresholds are a first-pass guess (aggregation
+    // smooths out extremes) — to be tuned visually once rendered, same as the
+    // zoom cutoffs.
+    const RDYLBU_5 = ['#2c7bb6', '#abd9e9', '#ffffbf', '#fdae61', '#d7191c'];
+
+    const LAYER_BREAKS = {
+        municipio: { thresholds: [-1.3, -0.3, 0.3, 1.3], colors: RDYLBU_5 },
+        comarca: { thresholds: [-0.65, -0.15, 0.15, 0.65], colors: RDYLBU_5 },
+        provincia: { thresholds: [-0.45, -0.1, 0.1, 0.45], colors: RDYLBU_5 },
+        ccaa: { thresholds: [-0.3, -0.15, 0.15, 0.3], colors: RDYLBU_5 },
+    };
+    const NO_DATA_COLOR = '#e0e0e0';
+
+    function buildFillColorExpression(layerId) {
+        const { thresholds, colors } = LAYER_BREAKS[layerId];
+        const stepArgs = [];
+        thresholds.forEach((t, i) => stepArgs.push(t, colors[i + 1]));
+        return [
+            'case',
+            ['==', ['feature-state', 'cagr'], null], NO_DATA_COLOR,
+            ['step', ['feature-state', 'cagr'], colors[0], ...stepArgs]
+        ];
+    }
+
+    // Layer definitions: name -> [minzoom, maxzoom) for MapLibre visibility.
+    // Municipio's entry point (7) stays fixed; ccaa/provincia get more room,
+    // comarca is compressed to a single zoom level (it was staying visible
+    // too long and entering too early before).
+    // borderOpacity is graduated (Option B): coarser/older ancestor borders
+    // fade into the background rather than competing visually once you've
+    // zoomed into a finer level.
+    const LAYERS = [
+        { id: 'ccaa', minzoom: 4, maxzoom: 5, borderWidth: 2, borderOpacity: 0.4 },
+        { id: 'provincia', minzoom: 5, maxzoom: 6, borderWidth: 2, borderOpacity: 0.4 },
+        { id: 'comarca', minzoom: 6, maxzoom: 7, borderWidth: 1.5, borderOpacity: 1 },
+        { id: 'municipio', minzoom: 7, maxzoom: 24, borderWidth: 0.3, borderOpacity: 0.65 },
+    ];
+
+    // Highlight line shown around the currently CLICKED feature only (no
+    // hover-tracking — with 8,132 municipio features, setFilter on every
+    // mousemove was too expensive and made the map feel laggy).
+    const HIGHLIGHT_WIDTH = 3.5;
+
+    // Search index: name/type/centroid for every entity (all 4 levels),
+    // loaded once at startup so search works instantly without depending on
+    // which vector tiles happen to be loaded already.
+    const SEARCH_INDEX_URL = 'data/processed/search_index.json';
+
+    // Fixed zoom to fly to per entity type, chosen safely inside that
+    // type's own display range (LAYERS above) so the correct fill layer is
+    // guaranteed active on arrival.
+    const TYPE_ZOOM = { ccaa: 4, provincia: 5.5, comarca: 6.5, municipio: 10 };
+    const TYPE_LABEL = { ccaa: 'Autonomous Community', provincia: 'Province', comarca: 'Comarca', municipio: 'Municipality' };
+
+    // ────────────────────────────────────────────────────────────────────
+    // MAP SETUP
+    // ────────────────────────────────────────────────────────────────────
+
+    const protocol = new pmtiles.Protocol();
+    maplibregl.addProtocol('pmtiles', protocol.tile);
+
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: {
+            version: 8,
+            glyphs: 'https://cdn.protomaps.com/fonts/pbf/{fontstack}/{range}.pbf',
+            sources: {
+                'basemap': {
+                    type: 'raster',
+                    tiles: [
+                        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                    ],
+                    tileSize: 256,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }
+            },
+            layers: [{ id: 'basemap-tiles', type: 'raster', source: 'basemap', minzoom: 0, maxzoom: 19 }]
+        },
+        center: [-3.7, 40.2],   // roughly the center of peninsular Spain
+        zoom: 4,                // starts inside the ccaa range (4-5)
+        maxZoom: 16,
+        minZoom: 4              // matches ccaa's own start exactly, no dead zone
+    });
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    // ────────────────────────────────────────────────────────────────────
+    // CAGR COMPUTATION (client-side — this is why the pmtiles only carries
+    // raw population per year, not precomputed variation columns)
+    // ────────────────────────────────────────────────────────────────────
+
+    function computeCAGR(pStart, pEnd, nYears) {
+        if (!pStart || !pEnd || pStart <= 0 || nYears <= 0) return null;
+        return (Math.pow(pEnd / pStart, 1 / nYears) - 1) * 100;
+    }
+
+    let currentStartYear = AVAILABLE_YEARS[0];
+    let currentEndYear = AVAILABLE_YEARS[AVAILABLE_YEARS.length - 1];
+
+    function updateFeatureStatesForLayer(layerId) {
+        const features = map.querySourceFeatures('population', { sourceLayer: layerId });
+        const nYears = currentEndYear - currentStartYear;
+        const seen = new Set();
+
+        for (const f of features) {
+            if (f.id === undefined || seen.has(f.id)) continue; // avoid redundant work across tile overlaps
+            seen.add(f.id);
+
+            const pStart = f.properties['p' + currentStartYear];
+            const pEnd = f.properties['p' + currentEndYear];
+            const cagr = computeCAGR(pStart, pEnd, nYears);
+
+            map.setFeatureState(
+                { source: 'population', sourceLayer: layerId, id: f.id },
+                { cagr: cagr }
+            );
+        }
+    }
+
+    function updateAllFeatureStates() {
+        LAYERS.forEach(layer => updateFeatureStatesForLayer(layer.id));
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // ADD SOURCE + LAYERS
+    // ────────────────────────────────────────────────────────────────────
+
+    map.on('load', () => {
+        map.addSource('population', {
+            type: 'vector',
+            url: PMTILES_URL
+        });
+
+        // Pass 1: fills (choropleth) — one active per zoom range, as before
+        LAYERS.forEach(layer => {
+            map.addLayer({
+                id: `${layer.id}-fill`,
+                type: 'fill',
+                source: 'population',
+                'source-layer': layer.id,
+                minzoom: layer.minzoom,
+                maxzoom: layer.maxzoom,
+                paint: {
+                    'fill-color': buildFillColorExpression(layer.id),
+                    'fill-opacity': 0.75
+                }
+            });
+        });
+
+        // Pass 2: borders. Draw order here is NOT the hierarchy order —
+        // comarca (gray) is drawn first/bottom so the black ccaa/provincia/
+        // municipio borders always sit on top and stay crisp where they
+        // coincide with a comarca edge.
+        const BORDER_DRAW_ORDER = ['comarca', 'ccaa', 'provincia', 'municipio'];
+        BORDER_DRAW_ORDER.forEach(layerId => {
+            const layer = LAYERS.find(l => l.id === layerId);
+            const lineWidth = (layer.id === 'municipio')
+                ? ['case',
+                    ['get', 'is_ccaa_capital'], 1.2,
+                    ['get', 'is_provincial_capital'], 0.8,
+                    layer.borderWidth]
+                : layer.borderWidth;
+
+            let lineColor;
+            if (layer.id === 'comarca') lineColor = '#555';       // darker gray, max opacity -- the readable "grouping" frame
+            else if (layer.id === 'municipio') lineColor = '#777'; // mid-gray -- thin line needs a darker tone than a thick one to read equally
+            else lineColor = '#333';                               // ccaa/provincia stay black
+
+            map.addLayer({
+                id: `${layer.id}-line`,
+                type: 'line',
+                source: 'population',
+                'source-layer': layer.id,
+                minzoom: layer.minzoom,
+                paint: {
+                    'line-color': lineColor,
+                    'line-opacity': layer.borderOpacity,
+                    'line-width': lineWidth
+                }
+            });
+        });
+
+        // Pass 3: click-highlight layers — one per level, on top of
+        // everything, initially matching no feature. Set via click handlers
+        // below (click-only, not hover — see HIGHLIGHT_WIDTH comment).
+        LAYERS.forEach(layer => {
+            map.addLayer({
+                id: `${layer.id}-highlight`,
+                type: 'line',
+                source: 'population',
+                'source-layer': layer.id,
+                minzoom: layer.minzoom,
+                paint: {
+                    'line-color': '#000',
+                    'line-width': HIGHLIGHT_WIDTH
+                },
+                filter: ['==', ['get', 'code'], '__none__']
+            });
+        });
+
+        // Recompute feature-state whenever tile data for this source changes
+        // (panning/zooming brings features into view that haven't had CAGR
+        // set yet). We do NOT gate this on e.isSourceLoaded — that flag isn't
+        // reliable for vector sources served through a custom protocol like
+        // pmtiles://, so it can leave feature-state (and therefore color)
+        // never applied. Debounced with requestAnimationFrame so rapid tile
+        // events during panning don't trigger redundant recomputation.
+        let pendingUpdate = false;
+        map.on('sourcedata', (e) => {
+            if (e.sourceId !== 'population') return;
+            if (pendingUpdate) return;
+            pendingUpdate = true;
+            requestAnimationFrame(() => {
+                updateAllFeatureStates();
+                pendingUpdate = false;
+            });
+        });
+
+        // Also force one update once the map has fully settled after initial
+        // load, in case no further 'sourcedata' events fire for the already-
+        // loaded viewport.
+        map.once('idle', updateAllFeatureStates);
+
+        // Legend reflects whichever layer is visible at the current zoom
+        updateLegend(getActiveLayerId(map.getZoom()));
+        map.on('zoom', () => updateLegend(getActiveLayerId(map.getZoom())));
+    });
+
+    // ────────────────────────────────────────────────────────────────────
+    // DYNAMIC LEGEND — breakpoints differ per layer, so the legend has to
+    // reflect whichever layer is currently visible at the map's zoom level
+    // ────────────────────────────────────────────────────────────────────
+
+    const LAYER_DISPLAY_NAME = {
+        municipio: 'Municipality',
+        comarca: 'Comarca',
+        provincia: 'Province',
+        ccaa: 'Autonomous Community',
+    };
+
+    function labelForRange(i, thresholds) {
+        if (i === 0) return `< ${thresholds[0]}%`;
+        if (i === thresholds.length) return `> ${thresholds[thresholds.length - 1]}%`;
+        return `${thresholds[i - 1]}% to ${thresholds[i]}%`;
+    }
+
+    function getActiveLayerId(zoom) {
+        const match = LAYERS.find(l => zoom >= l.minzoom && zoom < l.maxzoom);
+        return match ? match.id : LAYERS[LAYERS.length - 1].id;
+    }
+
+    let currentLegendLayer = null;
+
+    function updateLegend(layerId) {
+        if (layerId === currentLegendLayer) return; // avoid needless re-render
+        currentLegendLayer = layerId;
+
+        const { thresholds, colors } = LAYER_BREAKS[layerId];
+        let rows = colors.map((c, i) =>
+            `<div class="legend-row"><div class="legend-color" style="background:${c}"></div> ${labelForRange(i, thresholds)}</div>`
+        ).join('');
+        rows += `<div class="legend-row"><div class="legend-color" style="background:${NO_DATA_COLOR}"></div> No data</div>`;
+
+        document.getElementById('legend').innerHTML = `
+            <h4>Annual growth rate (CAGR)<br><span style="font-weight:400;color:#777">${LAYER_DISPLAY_NAME[layerId]} level</span></h4>
+            ${rows}
+        `;
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // POPUPS — content depends on which layer is currently active
+    // ────────────────────────────────────────────────────────────────────
+
+    function formatPop(n) {
+        return n != null ? Math.round(n).toLocaleString('en-US') : '—';
+    }
+
+    function popupHTML(layerId, props) {
+        const pStart = props['p' + currentStartYear];
+        const pEnd = props['p' + currentEndYear];
+        const nYears = currentEndYear - currentStartYear;
+        const cagr = computeCAGR(pStart, pEnd, nYears);
+        const cagrStr = cagr != null ? `${cagr.toFixed(2)}% / year` : 'n/a';
+
+        let header = `<strong>${props.name}</strong>`;
+        if (layerId === 'municipio') {
+            header += `<br><span style="color:#666">${props.comarca} · ${props.prov} · ${props.ccaa}</span>`;
+        } else if (layerId === 'comarca') {
+            header += `<br><span style="color:#666">${props.prov} · ${props.ccaa}</span>`;
+        } else if (layerId === 'provincia') {
+            header += `<br><span style="color:#666">${props.ccaa}</span>`;
+        }
+
+        return `
+            ${header}
+            <hr style="margin:6px 0;border:none;border-top:1px solid #ddd">
+            ${currentStartYear}: <strong>${formatPop(pStart)}</strong><br>
+            ${currentEndYear}: <strong>${formatPop(pEnd)}</strong><br>
+            CAGR: <strong>${cagrStr}</strong>
+        `;
+    }
+
+    function clearHighlights() {
+        LAYERS.forEach(l => {
+            map.setFilter(`${l.id}-highlight`, ['==', ['get', 'code'], '__none__']);
+        });
+    }
+
+    let activePopup = null;
+
+    // Shared by both a direct map click and a search-result selection:
+    // removes any previous popup deterministically, sets the highlight
+    // filter, and opens a new popup at the given point.
+    function selectFeature(layerId, props, lngLat) {
+        if (activePopup) {
+            activePopup.remove();
+            activePopup = null;
+        }
+
+        clearHighlights();
+        map.setFilter(`${layerId}-highlight`, ['==', ['get', 'code'], props.code]);
+
+        activePopup = new maplibregl.Popup({ maxWidth: '260px', closeOnClick: false })
+            .setLngLat(lngLat)
+            .setHTML(popupHTML(layerId, props))
+            .addTo(map);
+        activePopup.on('close', () => {
+            clearHighlights();
+            activePopup = null;
+        });
+    }
+
+    LAYERS.forEach(layer => {
+        map.on('click', `${layer.id}-fill`, (e) => {
+            if (!e.features || e.features.length === 0) return;
+            selectFeature(layer.id, e.features[0].properties, e.lngLat);
+        });
+
+        // Cursor feedback only (cheap) — no hover-tracked outline anymore
+        map.on('mouseenter', `${layer.id}-fill`, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', `${layer.id}-fill`, () => { map.getCanvas().style.cursor = ''; });
+    });
+
+    // ────────────────────────────────────────────────────────────────────
+    // SEARCH BOX
+    // ────────────────────────────────────────────────────────────────────
+
+    let searchIndex = [];
+    fetch(SEARCH_INDEX_URL)
+        .then(r => r.json())
+        .then(data => { searchIndex = data; })
+        .catch(err => console.error('Could not load search index:', err));
+
+    function normalizeText(s) {
+        // Strip accents/diacritics so "leon" matches "León", "penagos" matches "Peñagos", etc.
+        return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+
+    function breadcrumbFor(entry) {
+        return [entry.comarca, entry.prov, entry.ccaa].filter(Boolean).join(' · ');
+    }
+
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+
+    function renderResults(matches) {
+        if (matches.length === 0) {
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+            return;
+        }
+        searchResults.innerHTML = matches.slice(0, 8).map((m, i) => `
+            <div class="search-result-item" data-index="${i}">
+                <div class="search-result-name">${m.name}</div>
+                <div class="search-result-meta">${TYPE_LABEL[m.type]}${breadcrumbFor(m) ? ' · ' + breadcrumbFor(m) : ''}</div>
+            </div>
+        `).join('');
+        searchResults.style.display = 'block';
+
+        searchResults.querySelectorAll('.search-result-item').forEach((el, i) => {
+            el.addEventListener('click', () => selectSearchResult(matches[i]));
+        });
+    }
+
+    searchInput.addEventListener('input', () => {
+        const q = normalizeText(searchInput.value.trim());
+        if (q.length < 2) {
+            renderResults([]);
+            return;
+        }
+        const matches = searchIndex.filter(e => normalizeText(e.name).includes(q));
+        renderResults(matches);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!document.getElementById('search-control').contains(e.target)) {
+            renderResults([]);
+        }
+    });
+
+    function selectSearchResult(entry) {
+        searchInput.value = entry.name;
+        renderResults([]);
+
+        map.flyTo({ center: [entry.lon, entry.lat], zoom: TYPE_ZOOM[entry.type] });
+
+        // Wait for the map to settle (camera move + the target tile actually
+        // loading) before querying for the real feature -- the search index
+        // only has name/centroid, not population data, so we fetch the full
+        // properties fresh from the tile, same as a normal click would.
+        map.once('idle', () => {
+            const feats = map.querySourceFeatures('population', {
+                sourceLayer: entry.type,
+                filter: ['==', ['get', 'code'], entry.code]
+            });
+            if (feats.length > 0) {
+                selectFeature(entry.type, feats[0].properties, [entry.lon, entry.lat]);
+            }
+        });
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // DUAL-HANDLE YEAR SLIDER
+    // (native <input type=range> only supports one handle, so we overlay
+    // two of them — a standard vanilla-JS/CSS technique, no library needed)
+    // ────────────────────────────────────────────────────────────────────
+
+    const startSlider = document.getElementById('start-year-slider');
+    const endSlider = document.getElementById('end-year-slider');
+    const startLabel = document.getElementById('start-year-label');
+    const endLabel = document.getElementById('end-year-label');
+
+    startSlider.max = AVAILABLE_YEARS.length - 1;
+    endSlider.max = AVAILABLE_YEARS.length - 1;
+    startSlider.value = 0;
+    endSlider.value = AVAILABLE_YEARS.length - 1;
+
+    function onSliderChange() {
+        let startIdx = parseInt(startSlider.value, 10);
+        let endIdx = parseInt(endSlider.value, 10);
+
+        // Enforce a minimum 1-year gap (a 0-year interval makes CAGR undefined)
+        if (endIdx <= startIdx) {
+            endIdx = Math.min(startIdx + 1, AVAILABLE_YEARS.length - 1);
+            endSlider.value = endIdx;
+        }
+
+        currentStartYear = AVAILABLE_YEARS[startIdx];
+        currentEndYear = AVAILABLE_YEARS[endIdx];
+
+        startLabel.textContent = currentStartYear;
+        endLabel.textContent = currentEndYear;
+
+        updateAllFeatureStates();
+    }
+
+    startSlider.addEventListener('input', onSliderChange);
+    endSlider.addEventListener('input', onSliderChange);
+</script>
+
+</body>
+</html>
