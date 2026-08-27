@@ -165,14 +165,8 @@
         .maplibregl-popup-content strong { font-size: 14px; }
         /* --- Mobile layout: stack panels instead of overlapping --- */
         @media (max-width: 600px) {
-            #search-control {
-                width: calc(100% - 20px);
-                left: 10px;
-                right: 10px;
-                transform: none;
-            }
             #info {
-                top: 60px;
+                top: 10px;
                 left: 10px;
                 right: 10px;
                 max-width: none;
@@ -181,6 +175,13 @@
             #info h3 { font-size: 13px; }
             #info p { font-size: 11px; }
             #info em { font-size: 10px !important; }
+            #search-control {
+                top: 190px;
+                width: calc(100% - 20px);
+                left: 10px;
+                right: 10px;
+                transform: none;
+            }
             #legend {
                 bottom: 120px;
                 left: 10px;
