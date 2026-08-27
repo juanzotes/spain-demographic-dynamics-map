@@ -176,28 +176,35 @@
             #info p { font-size: 11px; }
             #info em { font-size: 10px !important; }
             #search-control {
-                top: 190px;
+                /* top is set dynamically by JS below, right under #info's
+                   actual measured height -- a fixed pixel guess kept being
+                   wrong on different phone screens */
                 width: calc(100% - 20px);
                 left: 10px;
                 right: 10px;
                 transform: none;
             }
+            /* Legend (bottom-left) and year control (bottom-right) side by
+               side instead of stacked, so the legend doesn't eat map space */
             #legend {
-                bottom: 120px;
-                left: 10px;
-                right: 10px;
-                padding: 8px 12px;
-            }
-            #legend h4 { font-size: 12px; }
-            #legend .legend-row { font-size: 11px; }
-            #legend .legend-color { width: 14px; height: 10px; margin-right: 6px; }
-            #year-control {
                 bottom: 10px;
                 left: 10px;
-                right: 10px;
-                width: auto;
-                padding: 10px 14px;
+                right: auto;
+                width: calc(50% - 15px);
+                padding: 6px 10px;
             }
+            #legend h4 { font-size: 11px; }
+            #legend .legend-row { font-size: 10px; margin-bottom: 2px; }
+            #legend .legend-color { width: 12px; height: 8px; margin-right: 5px; }
+            #year-control {
+                bottom: 10px;
+                left: auto;
+                right: 10px;
+                width: calc(50% - 15px);
+                padding: 8px 10px;
+            }
+            #year-control h4 { font-size: 11px; }
+            #year-labels span { font-size: 13px; }
         }
     </style>
 </head>
@@ -238,6 +245,22 @@
 
     // Relative path from this index.html to the pmtiles file.
     // Adjust if you move population_variation.pmtiles elsewhere.
+    // On mobile, position the search box right under the info panel using
+    // its ACTUAL rendered height, rather than a guessed fixed pixel offset
+    // (text wrapping varies enough between phone screen widths that a fixed
+    // number kept being wrong).
+    function positionSearchBelowInfo() {
+        const search = document.getElementById('search-control');
+        if (window.innerWidth <= 600) {
+            const infoRect = document.getElementById('info').getBoundingClientRect();
+            search.style.top = (infoRect.bottom + 10) + 'px';
+        } else {
+            search.style.top = ''; // let the default desktop CSS position apply
+        }
+    }
+    window.addEventListener('load', positionSearchBelowInfo);
+    window.addEventListener('resize', positionSearchBelowInfo);
+
     const PMTILES_URL = 'pmtiles://data/derived/population_variation.pmtiles';
 
     // Padrón years: annual from 1998 onward, plus the 1996 baseline (1997 has
