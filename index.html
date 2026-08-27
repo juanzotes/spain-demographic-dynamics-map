@@ -163,6 +163,41 @@
             padding: 10px 12px;
         }
         .maplibregl-popup-content strong { font-size: 14px; }
+        /* --- Mobile layout: stack panels instead of overlapping --- */
+        @media (max-width: 600px) {
+            #search-control {
+                width: calc(100% - 20px);
+                left: 10px;
+                right: 10px;
+                transform: none;
+            }
+            #info {
+                top: 60px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+                padding: 8px 12px;
+            }
+            #info h3 { font-size: 13px; }
+            #info p { font-size: 11px; }
+            #info em { font-size: 10px !important; }
+            #legend {
+                bottom: 120px;
+                left: 10px;
+                right: 10px;
+                padding: 8px 12px;
+            }
+            #legend h4 { font-size: 12px; }
+            #legend .legend-row { font-size: 11px; }
+            #legend .legend-color { width: 14px; height: 10px; margin-right: 6px; }
+            #year-control {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+                padding: 10px 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -177,9 +212,7 @@
 <div id="info">
     <h3>Population Change by Municipality</h3>
     <p>Spain, 1996–2025. Drag the slider to set a start and end year. Zoom out to see the same
-    trend aggregated by comarca, province, or autonomous community.
-    <br>
-    <em style="font-size: 11px;">Data source: Municipal Register of Inhabitants (Padrón Municipal), Instituto Nacional de Estadística (INE).</em></p>
+    trend aggregated by comarca, province, or autonomous community.</p>
 </div>
 
 <div id="legend"></div>
