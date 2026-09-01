@@ -7,6 +7,7 @@ free year-range slider to compare any two years and see the annualized growth ra
 red (growth) to blue (decline). Zoom out and the same trend re-aggregates automatically by
 comarca, province, or autonomous community — no reload, no server, one `.pmtiles` file.
 
+![screenshot of the map](image.png)
 
 ---
 
