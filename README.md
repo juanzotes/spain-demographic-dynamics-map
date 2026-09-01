@@ -135,8 +135,6 @@ than a fixed set of periods, took the most iteration.
 
 Juan Zotes Orcajo. Geospatial Research Data Scientist, Universidad Complutense de Madrid.
 
-[LinkedIn] · [Portfolio] · [Email]
-
 ---
 
 ## License
