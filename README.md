@@ -56,14 +56,21 @@ Aggregating to comarca/province/CCAA and swapping layers by zoom keeps every sca
 
 ## Findings
 
-[Fill in after exploring the map: the headline finding you'd tell a colleague about. Example
-shape: "Between 2018 and 2025, X% of Spain's municipalities lost population while the
-metropolitan belts around Madrid and the Mediterranean coast grew at Y%+ annually."]
+Two moments stand out when you drag the slider across the full series. Around 2013–2014,
+decline was almost universal — the austerity years ("los recortes"), when young adults left
+even municipalities that had otherwise been stable for decades. By 2023–2025 that had
+flipped: growth became the norm nationally, driven largely by immigration — but the map
+splits sharply along a coast/interior line once you isolate that period. The Mediterranean
+coastline and the Madrid metropolitan area grow consistently, while the interior of Castilla y León,
+Extremadura, and Castilla-La Mancha — plus inland Galicia — keeps declining even as the rest
+of the country turns around.
 
-- [Specific finding, e.g. "The interior (Castilla y León, Aragón, Castilla-La Mancha) shows
-  sustained decline across nearly every year range tested."]
-- [Another specific finding — a province, comarca, or period that surprised you.]
-- [A counterintuitive result, if you found one.]
+- A handful of municipalities (all of Ibiza's municipalities, most of Tenerife's municipalities,  Marbella...) never show a single losing year across 1996–2025; a much larger set across the interior never shows a single growing one.
+- Growth in the interior isn't random: comarca and provincial capitals reliably pull
+  population toward them. But there's also a real, more recent uptick in some smaller,
+  less populated municipalities — not a broad trend, just patchy pockets. It shows up mostly
+  as peri-urban growth ringing those capitals, and occasionally — less often — in genuinely
+  remote villages far from any center.
 
 ---
 
@@ -113,9 +120,14 @@ the search index) is committed, since that's what the live site actually serves.
 
 ## What I learned
 
-[Two or three specific sentences, written after actually building this end to end. What was
-harder than expected? What design decision took the most iteration? What would you do
-differently? This is the section people read most closely — be specific, not general.]
+This is my second interactive web map — the first was built with Leaflet, and it couldn't
+handle a dataset this size; loading 8,132 municipalities across 30 years of data made it
+crawl. Switching to MapLibre + PMTiles was the biggest lesson: the same data that choked
+Leaflet now loads instantly and the whole site weighs almost nothing, since the browser only
+streams the tile bytes it actually needs. Beyond that, most of the remaining work was in the
+pieces around the map itself — the year slider, the zoom-dependent legend, the search box.
+Getting the legend to stay accurate for *any* start/end year the slider could land on, rather
+than a fixed set of periods, took the most iteration.
 
 ---
 
