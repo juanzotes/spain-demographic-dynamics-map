@@ -120,7 +120,7 @@ the search index) is committed, since that's what the live site actually serves.
 
 ## What I learned
 
-This is my second interactive web map — the first was built with Leaflet, and it couldn't
+This is my second interactive web map. The first was built with Leaflet, and it couldn't
 handle a dataset this size; loading 8,132 municipalities across 30 years of data made it
 crawl. Switching to MapLibre + PMTiles was the biggest lesson: the same data that choked
 Leaflet now loads instantly and the whole site weighs almost nothing, since the browser only
@@ -128,7 +128,7 @@ streams the tile bytes it actually needs. Beyond that, most of the remaining wor
 pieces around the map itself — the year slider, the zoom-dependent legend, the search box.
 Getting the legend to stay accurate for *any* start/end year the slider could land on, rather
 than a fixed set of periods, took the most iteration. Tuning the zoom breakpoints was its own
-round of trial and error — picking the exact zoom levels at which the map swaps from
+round of trial and error: picking the exact zoom levels at which the map swaps from
 municipality to comarca to province to CCAA, so that whichever administrative unit is most
 relevant at a given scale is the one on screen, instead of an unreadable wall of 8,132
 polygons or an over-aggregated view that hides everything local.
@@ -138,6 +138,11 @@ polygons or an over-aggregated view that hides everything local.
 ## Author
 
 Juan Zotes Orcajo. Geospatial Research Data Scientist, Universidad Complutense de Madrid.
+
+[LinkedIn](https://www.linkedin.com/in/juan-zotes-orcajo-88a0a51aa/) ·
+[GitHub](https://github.com/juanzotes/) ·
+[juanzotes@gmail.com](mailto:juanzotes@gmail.com) ·
+[jzotes01@ucm.es](mailto:jzotes01@ucm.es)
 
 ---
 
