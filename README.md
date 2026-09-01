@@ -127,7 +127,11 @@ Leaflet now loads instantly and the whole site weighs almost nothing, since the 
 streams the tile bytes it actually needs. Beyond that, most of the remaining work was in the
 pieces around the map itself — the year slider, the zoom-dependent legend, the search box.
 Getting the legend to stay accurate for *any* start/end year the slider could land on, rather
-than a fixed set of periods, took the most iteration.
+than a fixed set of periods, took the most iteration. Tuning the zoom breakpoints was its own
+round of trial and error — picking the exact zoom levels at which the map swaps from
+municipality to comarca to province to CCAA, so that whichever administrative unit is most
+relevant at a given scale is the one on screen, instead of an unreadable wall of 8,132
+polygons or an over-aggregated view that hides everything local.
 
 ---
 
